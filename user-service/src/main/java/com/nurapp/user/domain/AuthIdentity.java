@@ -50,6 +50,17 @@ public class AuthIdentity {
 		return a;
 	}
 
+	/** E-posta/şifre kimliği oluşturur (provider_uid = normalize edilmiş e-posta). */
+	public static AuthIdentity email(UUID userId, String email, String passwordHash) {
+		AuthIdentity a = new AuthIdentity();
+		a.userId = userId;
+		a.provider = "email";
+		a.providerUid = email;
+		a.email = email;
+		a.passwordHash = passwordHash;
+		return a;
+	}
+
 	public UUID getId() {
 		return id;
 	}
@@ -64,5 +75,13 @@ public class AuthIdentity {
 
 	public String getProviderUid() {
 		return providerUid;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public String getPasswordHash() {
+		return passwordHash;
 	}
 }

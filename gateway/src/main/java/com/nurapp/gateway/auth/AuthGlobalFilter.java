@@ -64,6 +64,10 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isPublic(String path) {
+        // /auth/upgrade korumalı: mevcut anonim kullanıcının token'ı gerekir
+        if (path.equals("/auth/upgrade")) {
+            return false;
+        }
         return path.startsWith("/auth")
                 || path.startsWith("/content")
                 || path.startsWith("/actuator")
