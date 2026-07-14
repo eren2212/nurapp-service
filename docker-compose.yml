@@ -17,6 +17,7 @@ services:
     build: ./gateway
     container_name: nurapp-gateway
     restart: unless-stopped
+    env_file: .env
     depends_on: [user-service, content-service]
     ports:
       - "127.0.0.1:8090:8080"

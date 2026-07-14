@@ -18,6 +18,10 @@ spring:
               predicates:
                 - Path=/content/**
 
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+
 management:
   endpoints:
     web:
