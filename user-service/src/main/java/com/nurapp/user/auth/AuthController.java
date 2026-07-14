@@ -10,14 +10,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
 	private final DeviceAuthService deviceAuthService;
+	private final JwtService jwtService;
+	private final RefreshTokenService refreshTokenService;
 
-	public AuthController(DeviceAuthService deviceAuthService) {
+	public AuthController(DeviceAuthService deviceAuthService, JwtService jwtService,
+			RefreshTokenService refreshTokenService) {
 		this.deviceAuthService = deviceAuthService;
+		this.jwtService = jwtService;
+		this.refreshTokenService = refreshTokenService;
 	}
 
 	@PostMapping("/device")
 	public DeviceRegisterResponse device(@RequestBody(required = false) DeviceRegisterRequest req) {
 		String deviceId = (req == null) ? null : req.deviceId();
 		return deviceAuthService.registerDevice(deviceId);
+	}
+
+	@PostMapping("/token/refresh")
+	public TokenPairResponse refresh(@RequestBody TokenRefreshRequest req) {
+		var userId = refreshTokenService.consume(req.refreshToken()); // eskiyi iptal et
+		return new TokenPairResponse(jwtService.issueAccessToken(userId), refreshTokenService.issue(userId)); // yenisini
+																												// ver
 	}
 }

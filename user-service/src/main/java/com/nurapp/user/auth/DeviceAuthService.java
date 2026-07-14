@@ -16,11 +16,14 @@ public class DeviceAuthService {
 	private final UserRepository users;
 	private final AuthIdentityRepository identities;
 	private final JwtService jwt;
+	private final RefreshTokenService refreshTokens;
 
-	public DeviceAuthService(UserRepository users, AuthIdentityRepository identities, JwtService jwt) {
+	public DeviceAuthService(UserRepository users, AuthIdentityRepository identities, JwtService jwt,
+			RefreshTokenService refreshTokens) {
 		this.users = users;
 		this.identities = identities;
 		this.jwt = jwt;
+		this.refreshTokens = refreshTokens;
 	}
 
 	@Transactional
@@ -28,13 +31,19 @@ public class DeviceAuthService {
 		String did = (deviceId == null || deviceId.isBlank()) ? UUID.randomUUID().toString() : deviceId.trim();
 
 		var existing = identities.findByProviderAndProviderUid("device", did);
+		UUID userId;
+		boolean created;
 		if (existing.isPresent()) {
-			UUID uid = existing.get().getUserId();
-			return new DeviceRegisterResponse(uid, did, false, jwt.issueAccessToken(uid));
+			userId = existing.get().getUserId();
+			created = false;
+		} else {
+			User user = users.save(new User());
+			identities.save(AuthIdentity.device(user.getId(), did));
+			userId = user.getId();
+			created = true;
 		}
 
-		User user = users.save(new User());
-		identities.save(AuthIdentity.device(user.getId(), did));
-		return new DeviceRegisterResponse(user.getId(), did, true, jwt.issueAccessToken(user.getId()));
+		return new DeviceRegisterResponse(userId, did, created, jwt.issueAccessToken(userId),
+				refreshTokens.issue(userId));
 	}
 }
