@@ -6,11 +6,18 @@ services:
     env_file: .env
     networks: [backend]
 
+  content-service:
+    build: ./content-service
+    container_name: nurapp-content-service
+    restart: unless-stopped
+    env_file: .env
+    networks: [backend]
+
   gateway:
     build: ./gateway
     container_name: nurapp-gateway
     restart: unless-stopped
-    depends_on: [user-service]
+    depends_on: [user-service, content-service]
     ports:
       - "127.0.0.1:8090:8080"
     networks: [backend]

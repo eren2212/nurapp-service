@@ -13,6 +13,10 @@ spring:
               uri: http://user-service:8081
               predicates:
                 - Path=/users/**,/auth/**
+            - id: content-service
+              uri: http://content-service:8082
+              predicates:
+                - Path=/content/**
 
 management:
   endpoints:
