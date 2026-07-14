@@ -15,7 +15,10 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:60}
 management:
   endpoints:
     web:

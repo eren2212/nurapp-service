@@ -15,24 +15,26 @@ public class DeviceAuthService {
 
 	private final UserRepository users;
 	private final AuthIdentityRepository identities;
+	private final JwtService jwt;
 
-	public DeviceAuthService(UserRepository users, AuthIdentityRepository identities) {
+	public DeviceAuthService(UserRepository users, AuthIdentityRepository identities, JwtService jwt) {
 		this.users = users;
 		this.identities = identities;
+		this.jwt = jwt;
 	}
 
 	@Transactional
 	public DeviceRegisterResponse registerDevice(String deviceId) {
 		String did = (deviceId == null || deviceId.isBlank()) ? UUID.randomUUID().toString() : deviceId.trim();
 
-		// Aynı cihaz daha önce kaydolduysa mevcut kullanıcıyı döndür (idempotent)
 		var existing = identities.findByProviderAndProviderUid("device", did);
 		if (existing.isPresent()) {
-			return new DeviceRegisterResponse(existing.get().getUserId(), did, false);
+			UUID uid = existing.get().getUserId();
+			return new DeviceRegisterResponse(uid, did, false, jwt.issueAccessToken(uid));
 		}
 
 		User user = users.save(new User());
 		identities.save(AuthIdentity.device(user.getId(), did));
-		return new DeviceRegisterResponse(user.getId(), did, true);
+		return new DeviceRegisterResponse(user.getId(), did, true, jwt.issueAccessToken(user.getId()));
 	}
 }
