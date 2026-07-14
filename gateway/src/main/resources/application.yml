@@ -17,6 +17,10 @@ spring:
               uri: http://content-service:8082
               predicates:
                 - Path=/content/**
+            - id: subscription-service
+              uri: http://subscription-service:8083
+              predicates:
+                - Path=/subscriptions/**
 
 app:
   jwt:

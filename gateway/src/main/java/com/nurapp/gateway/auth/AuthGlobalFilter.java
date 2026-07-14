@@ -67,7 +67,8 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
         return path.startsWith("/auth")
                 || path.startsWith("/content")
                 || path.startsWith("/actuator")
-                || path.equals("/users/ping");
+                || path.equals("/users/ping")
+                || path.equals("/subscriptions/webhook");
     }
 
     private String bearerToken(ServerHttpRequest request) {

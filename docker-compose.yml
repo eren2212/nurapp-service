@@ -13,12 +13,19 @@ services:
     env_file: .env
     networks: [backend]
 
+  subscription-service:
+    build: ./subscription-service
+    container_name: nurapp-subscription-service
+    restart: unless-stopped
+    env_file: .env
+    networks: [backend]
+
   gateway:
     build: ./gateway
     container_name: nurapp-gateway
     restart: unless-stopped
     env_file: .env
-    depends_on: [user-service, content-service]
+    depends_on: [user-service, content-service, subscription-service]
     ports:
       - "127.0.0.1:8090:8080"
     networks: [backend]

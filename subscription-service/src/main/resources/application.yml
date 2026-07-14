@@ -1,0 +1,33 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: subscription-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/subscriptions_db
+    username: ${SUBSCRIPTIONS_DB_USER}
+    password: ${SUBSCRIPTIONS_DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  mvc:
+    problemdetails:
+      enabled: true
+
+app:
+  revenuecat:
+    webhook-secret: ${REVENUECAT_WEBHOOK_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
