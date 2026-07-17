@@ -24,6 +24,9 @@ public class User {
 	@Column(nullable = false)
 	private String status = "active";
 
+	@Column(name = "full_name")
+	private String fullName;
+
 	@CreationTimestamp
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private OffsetDateTime createdAt;
@@ -38,6 +41,14 @@ public class User {
 
 	public String getStatus() {
 		return status;
+	}
+
+	public String getFullName() {
+		return fullName;
+	}
+
+	public void setFullName(String fullName) {
+		this.fullName = fullName;
 	}
 
 	public OffsetDateTime getCreatedAt() {

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -26,11 +25,17 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Object> me(@AuthenticationPrincipal UUID userId) {
+    public ResponseEntity<MeResponse> me(@AuthenticationPrincipal UUID userId) {
         return users.findById(userId)
-                .<Object>map(u -> Map.of("userId", u.getId(), "status", u.getStatus(), "createdAt", u.getCreatedAt()))
+                .map(u -> new MeResponse(u.getId(), u.getStatus(), u.getFullName(), u.getCreatedAt()))
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/me")
+    public MeResponse updateProfile(@AuthenticationPrincipal UUID userId,
+                                     @RequestBody UpdateProfileRequest request) {
+        return profileService.updateProfile(userId, request);
     }
 
     @GetMapping("/me/preferences")

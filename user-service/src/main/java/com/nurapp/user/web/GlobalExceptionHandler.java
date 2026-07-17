@@ -8,6 +8,8 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.NoSuchElementException;
+
 /**
  * Servis genelinde tutarlı hata cevabı (RFC 7807 Problem Details).
  * Domain exception'ları burada ProblemDetail'e çevrilir; framework hataları (404/400/validation)
@@ -29,6 +31,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmailAlreadyInUseException.class)
     public ProblemDetail handleEmailInUse(EmailAlreadyInUseException ex) {
         return problem(HttpStatus.CONFLICT, "E-posta kullanımda", ex.getMessage());
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ProblemDetail handleNotFound(NoSuchElementException ex) {
+        return problem(HttpStatus.NOT_FOUND, "Bulunamadı", "Kullanıcı bulunamadı");
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail) {

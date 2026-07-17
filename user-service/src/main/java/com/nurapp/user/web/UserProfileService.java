@@ -1,11 +1,13 @@
 package com.nurapp.user.web;
 
+import com.nurapp.user.domain.User;
 import com.nurapp.user.domain.UserPreferences;
 import com.nurapp.user.domain.UserPreferencesRepository;
 import com.nurapp.user.domain.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -48,6 +50,16 @@ public class UserProfileService {
         }
 
         return toResponse(preferences.save(prefs));
+    }
+
+    @Transactional
+    public MeResponse updateProfile(UUID userId, UpdateProfileRequest req) {
+        User user = users.findById(userId).orElseThrow(NoSuchElementException::new);
+        if (req.fullName() != null) {
+            user.setFullName(req.fullName().isBlank() ? null : req.fullName().trim());
+        }
+        User saved = users.save(user);
+        return new MeResponse(saved.getId(), saved.getStatus(), saved.getFullName(), saved.getCreatedAt());
     }
 
     /**
