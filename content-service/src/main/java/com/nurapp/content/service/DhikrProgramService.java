@@ -37,7 +37,8 @@ public class DhikrProgramService {
                     var t = requested.getOrDefault(p.getId(), fallback.get(p.getId()));
                     String name = (t != null) ? t.getName() : p.getKey();
                     String description = (t != null) ? t.getDescription() : null;
-                    return new DhikrProgramDto(p.getKey(), name, description, p.getDefaultTarget(), p.isPremium());
+                    return new DhikrProgramDto(
+                            p.getKey(), name, description, p.getArabic(), p.getDefaultTarget(), p.isPremium());
                 })
                 .toList();
     }

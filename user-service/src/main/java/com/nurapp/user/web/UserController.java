@@ -1,6 +1,7 @@
 package com.nurapp.user.web;
 
 import com.nurapp.user.domain.UserRepository;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,7 +35,7 @@ public class UserController {
 
     @PatchMapping("/me")
     public MeResponse updateProfile(@AuthenticationPrincipal UUID userId,
-                                     @RequestBody UpdateProfileRequest request) {
+                                     @Valid @RequestBody UpdateProfileRequest request) {
         return profileService.updateProfile(userId, request);
     }
 
@@ -45,7 +46,7 @@ public class UserController {
 
     @PatchMapping("/me/preferences")
     public PreferencesResponse updatePreferences(@AuthenticationPrincipal UUID userId,
-                                                 @RequestBody UpdatePreferencesRequest request) {
+                                                 @Valid @RequestBody UpdatePreferencesRequest request) {
         return profileService.updatePreferences(userId, request);
     }
 

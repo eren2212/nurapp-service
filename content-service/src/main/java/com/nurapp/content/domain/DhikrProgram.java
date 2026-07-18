@@ -23,6 +23,9 @@ public class DhikrProgram {
     @Column(name = "default_target", nullable = false)
     private int defaultTarget;
 
+    @Column(nullable = false, length = 64)
+    private String arabic;
+
     @Column(nullable = false)
     private boolean premium = false;
 
@@ -42,6 +45,10 @@ public class DhikrProgram {
 
     public int getDefaultTarget() {
         return defaultTarget;
+    }
+
+    public String getArabic() {
+        return arabic;
     }
 
     public boolean isPremium() {
