@@ -44,11 +44,16 @@ public class RefreshTokenService {
 		if (rawToken == null || rawToken.isBlank()) {
 			throw new InvalidRefreshTokenException();
 		}
-		RefreshToken token = repo.findByTokenHash(sha256(rawToken)).orElseThrow(InvalidRefreshTokenException::new);
-		if (token.isRevoked() || token.getExpiresAt().isBefore(OffsetDateTime.now())) {
+		String hash = sha256(rawToken);
+		RefreshToken token = repo.findByTokenHash(hash).orElseThrow(InvalidRefreshTokenException::new);
+		if (token.getExpiresAt().isBefore(OffsetDateTime.now())) {
 			throw new InvalidRefreshTokenException();
 		}
-		token.revoke();
+		// Atomik iptal — iki eşzamanlı istek aynı token'ı tüketmeye çalışırsa yalnızca biri
+		// 1 satır günceller; diğeri 0 alır ve reddedilir (çift-kullanım/replay engellenir).
+		if (repo.revokeIfActive(hash) == 0) {
+			throw new InvalidRefreshTokenException();
+		}
 		return token.getUserId();
 	}
 

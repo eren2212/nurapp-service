@@ -57,11 +57,12 @@ class RefreshTokenServiceTest {
 		UUID userId = UUID.randomUUID();
 		RefreshToken stored = RefreshToken.create(userId, "irrelevant-in-mock", OffsetDateTime.now().plusDays(1));
 		when(repo.findByTokenHash(any())).thenReturn(Optional.of(stored));
+		when(repo.revokeIfActive(any())).thenReturn(1); // atomik iptal 1 satır güncelledi (bu istek kazandı)
 
 		UUID result = service.consume("some-raw-token");
 
 		assertThat(result).isEqualTo(userId);
-		assertThat(stored.isRevoked()).isTrue();
+		verify(repo).revokeIfActive(any());
 	}
 
 	@Test
@@ -85,8 +86,8 @@ class RefreshTokenServiceTest {
 	void consumeThrowsWhenTokenAlreadyRevoked() {
 		UUID userId = UUID.randomUUID();
 		RefreshToken revoked = RefreshToken.create(userId, "hash", OffsetDateTime.now().plusDays(1));
-		revoked.revoke();
 		when(repo.findByTokenHash(any())).thenReturn(Optional.of(revoked));
+		when(repo.revokeIfActive(any())).thenReturn(0); // DB'de zaten revoked → 0 satır etkilenir
 
 		assertThatThrownBy(() -> service.consume("revoked-token"))
 				.isInstanceOf(InvalidRefreshTokenException.class);
@@ -106,6 +107,7 @@ class RefreshTokenServiceTest {
 		UUID userId = UUID.randomUUID();
 		RefreshToken stored = RefreshToken.create(userId, "hash", OffsetDateTime.now().plusDays(1));
 		when(repo.findByTokenHash(any())).thenReturn(Optional.of(stored));
+		when(repo.revokeIfActive(any())).thenReturn(1, 0); // ilk consume kazanır (1), ikincisi 0 satır alır
 
 		service.consume("raw-token");
 		assertThatThrownBy(() -> service.consume("raw-token")).isInstanceOf(InvalidRefreshTokenException.class);

@@ -15,6 +15,8 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -22,6 +24,24 @@ public class SubscriptionService {
 
     private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
     private static final String DEFAULT_ENTITLEMENT = "premium";
+
+    /**
+     * Premium'u AÇAN/KORUYAN RevenueCat event tipleri (açık allow-list). Buradaki mantık kasıtlı
+     * olarak "izin listesi": listede olmayan her tip (EXPIRATION, SUBSCRIPTION_PAUSED, REFUND,
+     * TEST ve gelecekte eklenecek bilinmeyen tipler) pasif sayılır — güvenli varsayılan, yanlışlıkla
+     * premium açılmasını önler. CANCELLATION/BILLING_ISSUE aktif kalır çünkü kullanıcının erişimi
+     * süre sonuna (expiresAt) kadar devam eder; süre kontrolü Entitlement.isCurrentlyActive'de yapılır.
+     */
+    private static final Set<String> ACTIVE_EVENT_TYPES = Set.of(
+            "INITIAL_PURCHASE",
+            "RENEWAL",
+            "UNCANCELLATION",
+            "PRODUCT_CHANGE",
+            "NON_RENEWING_PURCHASE",
+            "SUBSCRIPTION_EXTENDED",
+            "CANCELLATION",
+            "BILLING_ISSUE",
+            "TRANSFER");
 
     private final WebhookEventRepository events;
     private final EntitlementRepository entitlements;
@@ -76,9 +96,9 @@ public class SubscriptionService {
         entitlements.save(entity);
     }
 
-    /** EXPIRATION dışındaki her olay tipi aktif sayılır (satın alma, yenileme, iptal-ama-süre-devam vb.). */
+    /** Yalnızca açık allow-list'teki tipler premium'u aktif tutar; diğer/bilinmeyen tipler pasif. */
     private boolean isActiveType(String type) {
-        return type != null && !type.equalsIgnoreCase("EXPIRATION");
+        return type != null && ACTIVE_EVENT_TYPES.contains(type.toUpperCase(Locale.ROOT));
     }
 
     private OffsetDateTime toOffset(Long epochMillis) {

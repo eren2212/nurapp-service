@@ -74,11 +74,17 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
 	}
 
 	private String clientIp(ServerHttpRequest request) {
-		// cloudflared/proxy arkasında gerçek istemci IP'si X-Forwarded-For'un ilk değeri.
-		String forwarded = request.getHeaders().getFirst("X-Forwarded-For");
-		if (forwarded != null && !forwarded.isBlank()) {
-			return forwarded.split(",")[0].trim();
+		// GÜVENLİK: Client-supplied X-Forwarded-For'a GÜVENME — saldırgan her istekte
+		// farklı bir XFF göndererek rate-limit'i sıfırlayabilir (brute-force bypass).
+		// Cloudflare gerçek istemci IP'sini CF-Connecting-IP'ye yazar ve client'ın gönderdiği
+		// değeri EZER, bu yüzden spoof edilemez — bizim tek güvenilir kaynağımız bu.
+		String cfIp = request.getHeaders().getFirst("CF-Connecting-IP");
+		if (cfIp != null && !cfIp.isBlank()) {
+			return cfIp.trim();
 		}
+		// Cloudflare arkasında değilsek (yerel/doğrudan erişim) TCP peer'ı kullan. Bu durumda
+		// tüm istekler tek proxy IP'sinde toplanabilir — güvenli tarafta kalmak (fazla
+		// kısıtlamak) az kısıtlamaktan iyidir.
 		if (request.getRemoteAddress() != null && request.getRemoteAddress().getAddress() != null) {
 			return request.getRemoteAddress().getAddress().getHostAddress();
 		}

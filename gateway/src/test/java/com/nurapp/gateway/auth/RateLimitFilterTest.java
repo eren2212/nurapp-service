@@ -110,19 +110,45 @@ class RateLimitFilterTest {
 	}
 
 	@Test
-	void usesXForwardedForOverRawRemoteAddress() {
-		// Gerçek istemci proxy/tunnel arkasındaysa X-Forwarded-For'daki ilk IP esas alınmalı.
+	void usesCfConnectingIpOverRawRemoteAddress() {
+		// Cloudflare arkasında gerçek istemci IP'si CF-Connecting-IP header'ında gelir; TCP peer
+		// (remoteAddress) tüm istekler için aynı cloudflared IP'sidir, ona göre saymamalıyız.
 		for (int i = 0; i < 20; i++) {
 			ServerWebExchange exchange = MockServerWebExchange.from(
 					MockServerHttpRequest.post("/auth/login")
-							.header("X-Forwarded-For", "8.8.8.8, 10.0.0.1")
+							.header("CF-Connecting-IP", "8.8.8.8")
 							.remoteAddress(new InetSocketAddress("10.0.0.1", 12345))
 							.build());
 			filter.filter(exchange, chain).block();
 		}
 		ServerWebExchange exchange = MockServerWebExchange.from(
 				MockServerHttpRequest.post("/auth/login")
-						.header("X-Forwarded-For", "8.8.8.8, 10.0.0.1")
+						.header("CF-Connecting-IP", "8.8.8.8")
+						.remoteAddress(new InetSocketAddress("10.0.0.1", 12345))
+						.build());
+
+		filter.filter(exchange, chain).block();
+
+		assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+	}
+
+	@Test
+	void spoofedXForwardedForCannotBypassLimit() {
+		// GÜVENLİK regresyonu: saldırgan her istekte farklı bir X-Forwarded-For gönderse bile
+		// gerçek IP (CF-Connecting-IP / remoteAddress) sabit kaldığından limit yenilenmemeli.
+		for (int i = 0; i < 20; i++) {
+			ServerWebExchange exchange = MockServerWebExchange.from(
+					MockServerHttpRequest.post("/auth/login")
+							.header("X-Forwarded-For", "1.2.3." + i) // her istekte farklı, uydurma
+							.header("CF-Connecting-IP", "9.9.9.9")
+							.remoteAddress(new InetSocketAddress("10.0.0.1", 12345))
+							.build());
+			filter.filter(exchange, chain).block();
+		}
+		ServerWebExchange exchange = MockServerWebExchange.from(
+				MockServerHttpRequest.post("/auth/login")
+						.header("X-Forwarded-For", "1.2.3.99")
+						.header("CF-Connecting-IP", "9.9.9.9")
 						.remoteAddress(new InetSocketAddress("10.0.0.1", 12345))
 						.build());
 
